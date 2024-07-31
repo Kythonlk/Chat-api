@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Chat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Additional custom styles if needed */
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+    <div id="chat-container" class="w-full max-w-md p-4 bg-white rounded-lg shadow-lg">
+        <div id="name-form" class="mb-4">
+            <h2 class="text-xl font-semibold mb-2">Enter Your Name</h2>
+            <input type="text" id="name-input" class="w-full p-2 border border-gray-300 rounded mb-2" placeholder="Your Name...">
+            <button onclick="startChat()" class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Start Chat</button>
+        </div>
+
+        <div id="chat-box" class="h-72 overflow-y-auto border border-gray-300 p-2 mb-4 bg-gray-50 rounded">
+            <!-- Chat messages will be appended here -->
+        </div>
+
+        <div id="chat-controls" class="flex">
+            <input type="text" id="message-input" class="flex-1 p-2 border border-gray-300 rounded mr-2" placeholder="Type a message...">
+            <button onclick="sendMessage()" class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const chatBox = document.getElementById('chat-box');
+        const messageInput = document.getElementById('message-input');
+        const nameInput = document.getElementById('name-input');
+        const nameForm = document.getElementById('name-form');
+        const chatControls = document.getElementById('chat-controls');
+        let socket;
+        let userName = '';
+
+        function startChat() {
+            userName = nameInput.value.trim();
+            if (userName) {
+                // Initialize WebSocket
+                socket = new WebSocket('ws://localhost:8080/ws');
+
+                socket.onopen = function() {
+                    console.log('Connected to server');
+                };
+
+                socket.onmessage = function(event) {
+                    const message = document.createElement('div');
+                    message.textContent = event.data;
+                    chatBox.appendChild(message);
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                };
+
+                socket.onerror = function(error) {
+                    console.log(`WebSocket Error: ${error}`);
+                };
+
+                // Hide the name form and show chat controls
+                nameForm.style.display = 'none';
+                chatControls.style.display = 'flex';
+            } else {
+                alert('Please enter your name');
+            }
+        }
+
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (message) {
+                socket.send(`${userName}: ${message}`);
+                messageInput.value = '';
+            }
+        }
+
+        messageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
